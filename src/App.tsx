@@ -35,8 +35,8 @@ export default function App() {
             <div className="w-16 h-16 bg-[var(--color-pastry-cream)] rounded-full flex items-center justify-center mb-4 text-[var(--color-pastry-brown)]">
               <Croissant size={32} strokeWidth={1.5} />
             </div>
-            <h1 className="text-3xl font-serif font-bold text-[var(--color-pastry-brown)] text-center">Pastelería Pro</h1>
-            <p className="text-sm text-[var(--color-pastry-accent)] mt-1 font-medium tracking-wide uppercase">Gestión & Costos</p>
+            <h1 className="text-4xl font-serif font-bold text-[var(--color-pastry-brown)] text-center tracking-tight">Sauco</h1>
+            <p className="text-xs text-[var(--color-pastry-accent)] mt-1 font-semibold tracking-widest uppercase opacity-80">Pastelería Artesanal</p>
           </div>
           <nav className="flex-1 p-6 space-y-3">
             <NavItem
@@ -91,11 +91,10 @@ function NavItem({
   return (
     <button
       onClick={onClick}
-      className={`w-full flex items-center space-x-4 px-5 py-3.5 rounded-2xl transition-all duration-200 ${
-        active
+      className={`w-full flex items-center space-x-4 px-5 py-3.5 rounded-2xl transition-all duration-200 ${active
           ? 'bg-[var(--color-pastry-brown)] text-white shadow-md transform scale-[1.02]'
           : 'text-[var(--color-pastry-text)] hover:bg-[var(--color-pastry-cream)] hover:text-[var(--color-pastry-brown)]'
-      }`}
+        }`}
     >
       {icon}
       <span className="font-medium text-[15px] tracking-wide">{label}</span>
