@@ -1,0 +1,5 @@
+{
+  "name": "Pastelería Pro",
+  "description": "Aplicación para gestionar insumos, recetas, y costear eventos de pastelería a gran escala.",
+  "requestFramePermissions": []
+}
