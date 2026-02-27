@@ -1,10 +1,11 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { Event, Ingredient, Recipe } from './types';
+import { Event, Ingredient, Order, Recipe } from './types';
 
 interface AppState {
   ingredients: Ingredient[];
   recipes: Recipe[];
   events: Event[];
+  orders: Order[];
 }
 
 interface AppContextType extends AppState {
@@ -17,12 +18,16 @@ interface AppContextType extends AppState {
   addEvent: (event: Omit<Event, 'id'>) => void;
   updateEvent: (id: string, event: Omit<Event, 'id'>) => void;
   deleteEvent: (id: string) => void;
+  addOrder: (order: Omit<Order, 'id'>) => void;
+  updateOrder: (id: string, order: Omit<Order, 'id'>) => void;
+  deleteOrder: (id: string) => void;
 }
 
 const defaultState: AppState = {
   ingredients: [],
   recipes: [],
   events: [],
+  orders: [],
 };
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -109,6 +114,27 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }));
   };
 
+  const addOrder = (order: Omit<Order, 'id'>) => {
+    setState((prev) => ({
+      ...prev,
+      orders: [...prev.orders, { ...order, id: generateId() }],
+    }));
+  };
+
+  const updateOrder = (id: string, order: Omit<Order, 'id'>) => {
+    setState((prev) => ({
+      ...prev,
+      orders: prev.orders.map((o) => (o.id === id ? { ...order, id } : o)),
+    }));
+  };
+
+  const deleteOrder = (id: string) => {
+    setState((prev) => ({
+      ...prev,
+      orders: prev.orders.filter((o) => o.id !== id),
+    }));
+  };
+
   return (
     <AppContext.Provider
       value={{
@@ -122,6 +148,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         addEvent,
         updateEvent,
         deleteEvent,
+        addOrder,
+        updateOrder,
+        deleteOrder,
       }}
     >
       {children}

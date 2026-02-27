@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { AppProvider } from './store';
-import { LayoutDashboard, ShoppingBag, BookOpen, CalendarHeart, Croissant } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, BookOpen, CalendarHeart, Croissant, Package } from 'lucide-react';
 import { Dashboard } from './components/Dashboard';
 import { Ingredients } from './components/Ingredients';
 import { Recipes } from './components/Recipes';
 import { Events } from './components/Events';
+import { Orders } from './components/Orders';
 
-type Tab = 'dashboard' | 'ingredients' | 'recipes' | 'events';
+type Tab = 'dashboard' | 'ingredients' | 'recipes' | 'events' | 'orders';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<Tab>('dashboard');
@@ -21,6 +22,8 @@ export default function App() {
         return <Recipes />;
       case 'events':
         return <Events />;
+      case 'orders':
+        return <Orders />;
       default:
         return <Dashboard />;
     }
@@ -63,6 +66,12 @@ export default function App() {
               active={activeTab === 'events'}
               onClick={() => setActiveTab('events')}
             />
+            <NavItem
+              icon={<Package size={20} />}
+              label="Pedidos"
+              active={activeTab === 'orders'}
+              onClick={() => setActiveTab('orders')}
+            />
           </nav>
         </aside>
 
@@ -92,8 +101,8 @@ function NavItem({
     <button
       onClick={onClick}
       className={`w-full flex items-center space-x-4 px-5 py-3.5 rounded-2xl transition-all duration-200 ${active
-          ? 'bg-[var(--color-pastry-brown)] text-white shadow-md transform scale-[1.02]'
-          : 'text-[var(--color-pastry-text)] hover:bg-[var(--color-pastry-cream)] hover:text-[var(--color-pastry-brown)]'
+        ? 'bg-[var(--color-pastry-brown)] text-white shadow-md transform scale-[1.02]'
+        : 'text-[var(--color-pastry-text)] hover:bg-[var(--color-pastry-cream)] hover:text-[var(--color-pastry-brown)]'
         }`}
     >
       {icon}

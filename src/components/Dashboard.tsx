@@ -1,10 +1,10 @@
 import React from 'react';
 import { useAppContext } from '../store';
-import { ShoppingBag, BookOpen, CalendarHeart, TrendingUp } from 'lucide-react';
+import { ShoppingBag, BookOpen, CalendarHeart, TrendingUp, Package } from 'lucide-react';
 import { motion } from 'motion/react';
 
 export function Dashboard() {
-  const { ingredients, recipes, events } = useAppContext();
+  const { ingredients, recipes, events, orders } = useAppContext();
 
   const upcomingEvents = events
     .filter((e) => new Date(e.date) >= new Date())
@@ -33,7 +33,9 @@ export function Dashboard() {
     return totalCost * (1 + event.profitMargin / 100);
   };
 
-  const totalRevenue = events.reduce((total, event) => total + calculateEventPrice(event), 0);
+  const totalOrdersRevenue = orders.reduce((total, order) => total + order.totalPrice, 0);
+
+  const totalRevenue = events.reduce((total, event) => total + calculateEventPrice(event), 0) + totalOrdersRevenue;
   const totalCost = events.reduce((total, event) => total + calculateEventTotalCost(event), 0);
   const totalProfit = totalRevenue - totalCost;
 
@@ -51,34 +53,41 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-6">
         <StatCard
           icon={<ShoppingBag className="text-amber-600" size={24} />}
-          label="Insumos Registrados"
+          label="Insumos"
           value={ingredients.length.toString()}
           bgColor="bg-amber-50"
           index={0}
         />
         <StatCard
           icon={<BookOpen className="text-emerald-600" size={24} />}
-          label="Recetas Creadas"
+          label="Recetas"
           value={recipes.length.toString()}
           bgColor="bg-emerald-50"
           index={1}
         />
         <StatCard
           icon={<CalendarHeart className="text-rose-600" size={24} />}
-          label="Eventos Totales"
+          label="Eventos"
           value={events.length.toString()}
           bgColor="bg-rose-50"
           index={2}
         />
         <StatCard
+          icon={<Package className="text-indigo-600" size={24} />}
+          label="Pedidos"
+          value={orders.length.toString()}
+          bgColor="bg-indigo-50"
+          index={3}
+        />
+        <StatCard
           icon={<TrendingUp className="text-blue-600" size={24} />}
-          label="Ganancia Estimada"
+          label="Ganancia Total"
           value={`$${totalProfit.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
           bgColor="bg-blue-50"
-          index={3}
+          index={4}
         />
       </div>
 

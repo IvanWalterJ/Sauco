@@ -40,3 +40,17 @@ export interface Event {
   profitMargin: number; // percentage
   extraExpenses: number;
 }
+export interface Order {
+  id: string;
+  customerName: string;
+  deliveryDate: string;
+  status: 'pending' | 'completed' | 'cancelled';
+  items: {
+    recipeId: string;
+    quantity: number;
+    notes: string;
+  }[];
+  totalPrice: number;
+  depositPaid: number;
+  notes: string;
+}

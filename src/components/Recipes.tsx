@@ -49,7 +49,7 @@ export function Recipes() {
       setCurrentIngredient({
         ...currentIngredient,
         ingredientId: id,
-        unit: compatibleUnits[0], // Default to the first compatible unit
+        unit: compatibleUnits[0] === 'kg' ? 'g' : (compatibleUnits[0] === 'l' ? 'ml' : compatibleUnits[0]),
       });
     } else {
       setCurrentIngredient({ ...currentIngredient, ingredientId: id });
@@ -169,7 +169,7 @@ export function Recipes() {
 
             <div className="border-t border-[var(--color-pastry-cream)] pt-6">
               <h4 className="text-xl font-serif font-bold text-[var(--color-pastry-brown)] mb-4">Ingredientes de la receta</h4>
-              
+
               <div className="flex flex-col md:flex-row gap-4 mb-6 items-end bg-[var(--color-pastry-bg)] p-4 rounded-2xl border border-[var(--color-pastry-cream)]">
                 <div className="flex-1">
                   <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Insumo</label>
@@ -207,7 +207,7 @@ export function Recipes() {
                     className="w-full p-3 bg-white border border-[var(--color-pastry-cream)] rounded-xl focus:ring-2 focus:ring-[var(--color-pastry-accent)] focus:border-transparent outline-none transition-all disabled:opacity-50"
                   >
                     {availableUnits.map(u => (
-                      <option key={u} value={u}>{u}</option>
+                      <option key={u} value={u}>{u === 'g' ? 'gramos' : (u === 'kg' ? 'kilos' : (u === 'ml' ? 'ml' : (u === 'l' ? 'litros' : 'unidades')))}</option>
                     ))}
                     {availableUnits.length === 0 && <option value="g">g</option>}
                   </select>
@@ -338,7 +338,7 @@ export function Recipes() {
                     <td className="p-5 text-gray-500">
                       {formatCurrency(costPerYield)} / {recipe.yieldUnit}
                     </td>
-                    <td className="p-5 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="p-5 text-right space-x-2 transition-opacity">
                       <button
                         onClick={() => handleEdit(recipe)}
                         className="p-2 text-gray-400 hover:text-[var(--color-pastry-accent)] hover:bg-[var(--color-pastry-cream)] rounded-xl transition-all"

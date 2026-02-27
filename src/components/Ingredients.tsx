@@ -62,12 +62,12 @@ export function Ingredients() {
           <h3 className="text-2xl font-serif font-bold text-[var(--color-pastry-brown)] mb-6">
             {editingId ? 'Editar Insumo' : 'Agregar Insumo'}
           </h3>
-          
+
           <div className="bg-blue-50 text-blue-800 p-4 rounded-xl mb-6 flex items-start space-x-3 text-sm">
             <Info className="flex-shrink-0 mt-0.5" size={18} />
             <p>
-              <strong>Tip:</strong> Ingresa la cantidad y unidad en la que compras el producto. 
-              Si compras una tableta de chocolate de 500g, ingresa "500" y selecciona "g". 
+              <strong>Tip:</strong> Ingresa la cantidad y unidad en la que compras el producto.
+              Si compras una tableta de chocolate de 500g, ingresa "500" y selecciona "g".
               Si compras 1kg de harina, ingresa "1" y selecciona "kg".
             </p>
           </div>
@@ -181,7 +181,7 @@ export function Ingredients() {
                     <td className="p-5 text-gray-500">
                       {formatCurrency(costPerUnit)} / {ingredient.unit}
                     </td>
-                    <td className="p-5 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="p-5 text-right space-x-2 transition-opacity">
                       <button
                         onClick={() => handleEdit(ingredient)}
                         className="p-2 text-gray-400 hover:text-[var(--color-pastry-accent)] hover:bg-[var(--color-pastry-cream)] rounded-xl transition-all"
