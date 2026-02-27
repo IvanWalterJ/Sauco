@@ -23,7 +23,6 @@ export function Dashboard() {
         return rTotal + costPerUnit * ri.quantity;
       }, 0);
 
-      const laborCost = (event.partnerHours * event.partnerHourlyRate) + event.extraHelpCost;
       return total + recipeCost * er.multiplier;
     }, 0);
     const laborCost = (event.partnerHours * event.partnerHourlyRate) + event.extraHelpCost;

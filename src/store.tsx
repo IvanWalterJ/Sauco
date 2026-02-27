@@ -37,7 +37,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const saved = localStorage.getItem('pasteleria-pro-data');
     if (saved) {
       try {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        return { ...defaultState, ...parsed };
       } catch (e) {
         console.error('Failed to parse saved data', e);
       }
