@@ -1,7 +1,8 @@
 import React from 'react';
 import { useAppContext } from '../store';
-import { ShoppingBag, BookOpen, CalendarHeart, TrendingUp, Package } from 'lucide-react';
+import { ShoppingBag, BookOpen, CalendarHeart, TrendingUp, Package, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 
 export function Dashboard() {
   const { ingredients, recipes, events, orders } = useAppContext();
@@ -39,6 +40,33 @@ export function Dashboard() {
   const totalRevenue = events.reduce((total, event) => total + calculateEventPrice(event), 0) + totalOrdersRevenue;
   const totalCost = events.reduce((total, event) => total + calculateEventTotalCost(event), 0);
   const totalProfit = totalRevenue - totalCost;
+
+  const upcomingOrders = orders
+    .filter((o) => new Date(o.deliveryDate) >= new Date(new Date().setHours(0, 0, 0, 0)))
+    .sort((a, b) => new Date(a.deliveryDate).getTime() - new Date(b.deliveryDate).getTime())
+    .slice(0, 5);
+
+  const allTransactions = [
+    ...events.map(e => ({ date: new Date(e.date), amount: calculateEventPrice(e), type: 'Ingreso' })),
+    ...orders.map(o => ({ date: new Date(o.deliveryDate), amount: o.totalPrice, type: 'Ingreso' })),
+    ...events.map(e => ({ date: new Date(e.date), amount: calculateEventTotalCost(e), type: 'Egreso' }))
+  ].sort((a, b) => a.date.getTime() - b.date.getTime());
+
+  const chartDataMap = new Map();
+  allTransactions.forEach(t => {
+    const key = t.date.toLocaleDateString('es-AR', { month: 'short', year: 'numeric' });
+    if (!chartDataMap.has(key)) {
+      chartDataMap.set(key, { name: key, Ingresos: 0, Egresos: 0 });
+    }
+    const current = chartDataMap.get(key);
+    if (t.type === 'Ingreso') current.Ingresos += t.amount;
+    else current.Egresos += t.amount;
+  });
+
+  const chartData = Array.from(chartDataMap.values());
+  if (chartData.length === 0) {
+    chartData.push({ name: 'Mes Actual', Ingresos: 0, Egresos: 0 });
+  }
 
   return (
     <motion.div
@@ -93,72 +121,144 @@ export function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-12">
-        <motion.div
-          initial={{ opacity: 0, x: -20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.4 }}
-          className="bg-white p-8 rounded-[2rem] premium-shadow border border-[var(--color-pastry-cream)]"
-        >
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-2xl font-serif font-bold text-[var(--color-pastry-brown)]">Próximos Eventos</h3>
-            <span className="px-3 py-1 bg-[var(--color-pastry-cream)] text-[var(--color-pastry-brown)] text-xs font-bold rounded-full uppercase tracking-tighter">Agenda</span>
-          </div>
-          {upcomingEvents.length > 0 ? (
-            <div className="space-y-4">
-              {upcomingEvents.map((event) => (
-                <div key={event.id} className="flex justify-between items-center p-5 bg-[var(--color-pastry-bg)] rounded-2xl border border-[var(--color-pastry-cream)] hover:bg-white hover:premium-shadow transition-all duration-300">
-                  <div>
-                    <p className="font-bold text-[var(--color-pastry-brown)] text-lg leading-none mb-1">{event.name}</p>
-                    <p className="text-sm text-stone-500 font-medium">
-                      {new Date(event.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long' })} • {event.pax} pax
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <p className="font-bold text-[var(--color-pastry-accent)] text-lg">${calculateEventPrice(event).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                    <p className="text-xs text-stone-500 font-medium">Margen: {event.profitMargin}%</p>
-                  </div>
-                </div>
-              ))}
+        <div className="space-y-8">
+          {/* PRÓXIMOS EVENTOS */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.4 }}
+            className="bg-white p-8 rounded-[2rem] premium-shadow border border-[var(--color-pastry-cream)]"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-serif font-bold text-[var(--color-pastry-brown)]">Próximos Eventos</h3>
+              <span className="px-3 py-1 bg-[var(--color-pastry-cream)] text-[var(--color-pastry-brown)] text-xs font-bold rounded-full uppercase tracking-tighter">Agenda</span>
             </div>
-          ) : (
-            <div className="text-center py-12 bg-[var(--color-pastry-bg)] rounded-2xl border border-dashed border-[var(--color-pastry-cream)]">
-              <CalendarHeart className="mx-auto text-stone-300 mb-3" size={48} strokeWidth={1} />
-              <p className="text-stone-500 font-medium">No hay eventos próximos agendados.</p>
-            </div>
-          )}
-        </motion.div>
+            {upcomingEvents.length > 0 ? (
+              <div className="space-y-4">
+                {upcomingEvents.map((event) => (
+                  <div key={event.id} className="flex justify-between items-center p-5 bg-[var(--color-pastry-bg)] rounded-2xl border border-[var(--color-pastry-cream)] hover:bg-white hover:premium-shadow transition-all duration-300">
+                    <div>
+                      <p className="font-bold text-[var(--color-pastry-brown)] text-lg leading-none mb-1">{event.name}</p>
+                      <p className="text-sm text-stone-500 font-medium">
+                        {new Date(event.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long' })} • {event.pax} pax
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-[var(--color-pastry-accent)] text-lg">${calculateEventPrice(event).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className="text-xs text-stone-500 font-medium">Margen: {event.profitMargin}%</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-[var(--color-pastry-bg)] rounded-2xl border border-dashed border-[var(--color-pastry-cream)]">
+                <CalendarHeart className="mx-auto text-stone-300 mb-3" size={48} strokeWidth={1} />
+                <p className="text-stone-500 font-medium">No hay eventos próximos agendados.</p>
+              </div>
+            )}
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, x: 20 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5, delay: 0.5 }}
-          className="bg-white p-8 rounded-[2rem] premium-shadow border border-[var(--color-pastry-cream)]"
-        >
-          <div className="flex items-center justify-between mb-8">
-            <h3 className="text-2xl font-serif font-bold text-[var(--color-pastry-brown)]">Resumen Financiero</h3>
-            <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full uppercase tracking-tighter">Salud Financiera</span>
-          </div>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center p-5 bg-[var(--color-pastry-bg)] rounded-2xl border border-[var(--color-pastry-cream)]">
-              <span className="text-stone-600 font-medium">Ingresos Totales Estimados</span>
-              <span className="font-bold text-[var(--color-pastry-brown)] text-lg">${totalRevenue.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+          {/* PRÓXIMOS PEDIDOS */}
+          <motion.div
+            initial={{ opacity: 0, x: -20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.5 }}
+            className="bg-white p-8 rounded-[2rem] premium-shadow border border-[var(--color-pastry-cream)]"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-serif font-bold text-[var(--color-pastry-brown)]">Próximos Pedidos</h3>
+              <span className="px-3 py-1 bg-indigo-50 text-indigo-700 text-xs font-bold rounded-full uppercase tracking-tighter">Entregas</span>
             </div>
-            <div className="flex justify-between items-center p-5 bg-[var(--color-pastry-bg)] rounded-2xl border border-[var(--color-pastry-cream)]">
-              <span className="text-stone-600 font-medium">Inversión en Costos</span>
-              <span className="font-bold text-[var(--color-pastry-brown)] text-lg">${totalCost.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-            </div>
-            <div className="flex justify-between items-center p-6 bg-amber-50 rounded-2xl border border-amber-100 mt-6 overflow-hidden relative">
-              <div className="absolute right-0 top-0 w-24 h-full bg-gradient-to-l from-amber-100 to-transparent pointer-events-none opacity-50"></div>
-              <div className="z-10">
-                <p className="text-amber-800 text-sm font-bold uppercase tracking-widest mb-1">Ganancia Neta</p>
-                <p className="font-serif font-bold text-amber-700 text-3xl tracking-tight">${totalProfit.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+            {upcomingOrders.length > 0 ? (
+              <div className="space-y-4">
+                {upcomingOrders.map((order) => (
+                  <div key={order.id} className="flex justify-between items-center p-5 bg-[var(--color-pastry-bg)] rounded-2xl border border-[var(--color-pastry-cream)] hover:bg-white hover:premium-shadow transition-all duration-300">
+                    <div>
+                      <p className="font-bold text-[var(--color-pastry-brown)] text-lg leading-none mb-1">{order.customerName}</p>
+                      <p className="text-sm text-stone-500 font-medium flex items-center gap-1">
+                        <Clock size={12} /> {new Date(order.deliveryDate).toLocaleDateString('es-AR', { day: '2-digit', month: 'long' })}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <p className="font-bold text-[var(--color-pastry-accent)] text-lg">${order.totalPrice.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                      <p className="text-xs text-stone-500 font-medium">{order.items.length} {order.items.length === 1 ? 'producto' : 'productos'}</p>
+                    </div>
+                  </div>
+                ))}
               </div>
-              <div className="p-3 bg-white/60 backdrop-blur-sm rounded-xl text-amber-600">
-                <TrendingUp size={28} />
+            ) : (
+              <div className="text-center py-12 bg-[var(--color-pastry-bg)] rounded-2xl border border-dashed border-[var(--color-pastry-cream)]">
+                <Package className="mx-auto text-stone-300 mb-3" size={48} strokeWidth={1} />
+                <p className="text-stone-500 font-medium">No hay pedidos pendientes de entrega.</p>
+              </div>
+            )}
+          </motion.div>
+        </div>
+
+        <div className="space-y-8">
+          <motion.div
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.5, delay: 0.6 }}
+            className="bg-white p-8 rounded-[2rem] premium-shadow border border-[var(--color-pastry-cream)]"
+          >
+            <div className="flex items-center justify-between mb-8">
+              <h3 className="text-2xl font-serif font-bold text-[var(--color-pastry-brown)]">Resumen Financiero</h3>
+              <span className="px-3 py-1 bg-emerald-50 text-emerald-700 text-xs font-bold rounded-full uppercase tracking-tighter">Salud Financiera</span>
+            </div>
+            <div className="space-y-4">
+              <div className="flex justify-between items-center p-5 bg-[var(--color-pastry-bg)] rounded-2xl border border-[var(--color-pastry-cream)]">
+                <span className="text-stone-600 font-medium">Ingresos Totales Estimados</span>
+                <span className="font-bold text-[var(--color-pastry-brown)] text-lg">${totalRevenue.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between items-center p-5 bg-[var(--color-pastry-bg)] rounded-2xl border border-[var(--color-pastry-cream)]">
+                <span className="text-stone-600 font-medium">Inversión en Costos</span>
+                <span className="font-bold text-[var(--color-pastry-brown)] text-lg">${totalCost.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+              </div>
+              <div className="flex justify-between items-center p-6 bg-amber-50 rounded-2xl border border-amber-100 mt-6 overflow-hidden relative">
+                <div className="absolute right-0 top-0 w-24 h-full bg-gradient-to-l from-amber-100 to-transparent pointer-events-none opacity-50"></div>
+                <div className="z-10">
+                  <p className="text-amber-800 text-sm font-bold uppercase tracking-widest mb-1">Ganancia Neta</p>
+                  <p className="font-serif font-bold text-amber-700 text-3xl tracking-tight">${totalProfit.toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+                </div>
+                <div className="p-3 bg-white/60 backdrop-blur-sm rounded-xl text-amber-600">
+                  <TrendingUp size={28} />
+                </div>
               </div>
             </div>
-          </div>
-        </motion.div>
+
+            <div className="mt-8 pt-8 border-t border-[var(--color-pastry-cream)]">
+              <h4 className="text-sm font-bold text-stone-400 uppercase tracking-widest mb-6">Proyección de Movimientos</h4>
+              <div className="h-64 sm:h-72 w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData} margin={{ top: 5, right: 10, bottom: 5, left: -20 }}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0e9e1" />
+                    <XAxis
+                      dataKey="name"
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#78716c' }}
+                      dy={10}
+                    />
+                    <YAxis
+                      axisLine={false}
+                      tickLine={false}
+                      tick={{ fontSize: 12, fill: '#78716c' }}
+                      tickFormatter={(value) => `$${value}`}
+                      dx={-10}
+                    />
+                    <Tooltip
+                      contentStyle={{ borderRadius: '1rem', border: '1px solid #f0e9e1', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)', fontWeight: 'bold' }}
+                      itemStyle={{ fontWeight: 'normal' }}
+                    />
+                    <Line type="monotone" dataKey="Ingresos" name="Ingresos" stroke="#d97706" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                    <Line type="monotone" dataKey="Egresos" name="Egresos" stroke="#ef4444" strokeWidth={3} dot={{ r: 4, strokeWidth: 2 }} activeDot={{ r: 6 }} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </motion.div>
+        </div>
       </div>
     </motion.div>
   );

@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { Event, Ingredient, Order, Recipe } from './types';
+import { adjustStock } from './utils';
 
 interface AppState {
   ingredients: Ingredient[];
@@ -97,43 +98,84 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const addEvent = (event: Omit<Event, 'id'>) => {
     setState((prev) => ({
       ...prev,
+      ingredients: adjustStock(prev.ingredients, prev.recipes, event.recipes, true),
       events: [...prev.events, { ...event, id: generateId() }],
     }));
   };
 
   const updateEvent = (id: string, event: Omit<Event, 'id'>) => {
-    setState((prev) => ({
-      ...prev,
-      events: prev.events.map((e) => (e.id === id ? { ...event, id } : e)),
-    }));
+    setState((prev) => {
+      const oldEvent = prev.events.find(e => e.id === id);
+      let newIngredients = prev.ingredients;
+      if (oldEvent) {
+        newIngredients = adjustStock(newIngredients, prev.recipes, oldEvent.recipes, false);
+      }
+      newIngredients = adjustStock(newIngredients, prev.recipes, event.recipes, true);
+
+      return {
+        ...prev,
+        ingredients: newIngredients,
+        events: prev.events.map((e) => (e.id === id ? { ...event, id } : e)),
+      };
+    });
   };
 
   const deleteEvent = (id: string) => {
-    setState((prev) => ({
-      ...prev,
-      events: prev.events.filter((e) => e.id !== id),
-    }));
+    setState((prev) => {
+      const oldEvent = prev.events.find(e => e.id === id);
+      const newIngredients = oldEvent ? adjustStock(prev.ingredients, prev.recipes, oldEvent.recipes, false) : prev.ingredients;
+      return {
+        ...prev,
+        ingredients: newIngredients,
+        events: prev.events.filter((e) => e.id !== id),
+      };
+    });
   };
 
   const addOrder = (order: Omit<Order, 'id'>) => {
-    setState((prev) => ({
-      ...prev,
-      orders: [...prev.orders, { ...order, id: generateId() }],
-    }));
+    setState((prev) => {
+      const orderItems = order.items.map(i => ({ recipeId: i.recipeId, multiplier: i.quantity }));
+      return {
+        ...prev,
+        ingredients: adjustStock(prev.ingredients, prev.recipes, orderItems, true),
+        orders: [...prev.orders, { ...order, id: generateId() }],
+      };
+    });
   };
 
   const updateOrder = (id: string, order: Omit<Order, 'id'>) => {
-    setState((prev) => ({
-      ...prev,
-      orders: prev.orders.map((o) => (o.id === id ? { ...order, id } : o)),
-    }));
+    setState((prev) => {
+      const oldOrder = prev.orders.find(o => o.id === id);
+      let newIngredients = prev.ingredients;
+      if (oldOrder) {
+        const oldOrderItems = oldOrder.items.map(i => ({ recipeId: i.recipeId, multiplier: i.quantity }));
+        newIngredients = adjustStock(newIngredients, prev.recipes, oldOrderItems, false);
+      }
+      const newOrderItems = order.items.map(i => ({ recipeId: i.recipeId, multiplier: i.quantity }));
+      newIngredients = adjustStock(newIngredients, prev.recipes, newOrderItems, true);
+
+      return {
+        ...prev,
+        ingredients: newIngredients,
+        orders: prev.orders.map((o) => (o.id === id ? { ...order, id } : o)),
+      };
+    });
   };
 
   const deleteOrder = (id: string) => {
-    setState((prev) => ({
-      ...prev,
-      orders: prev.orders.filter((o) => o.id !== id),
-    }));
+    setState((prev) => {
+      const oldOrder = prev.orders.find(o => o.id === id);
+      let newIngredients = prev.ingredients;
+      if (oldOrder) {
+        const oldOrderItems = oldOrder.items.map(i => ({ recipeId: i.recipeId, multiplier: i.quantity }));
+        newIngredients = adjustStock(newIngredients, prev.recipes, oldOrderItems, false);
+      }
+      return {
+        ...prev,
+        ingredients: newIngredients,
+        orders: prev.orders.filter((o) => o.id !== id),
+      };
+    });
   };
 
   return (

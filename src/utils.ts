@@ -1,9 +1,15 @@
-import { BaseUnit } from './types';
+import { BaseUnit, Ingredient, Recipe } from './types';
 
 export const convertToBaseUnit = (quantity: number, unit: BaseUnit): number => {
   if (unit === 'kg') return quantity * 1000;
   if (unit === 'l') return quantity * 1000;
   return quantity; // g, ml, u
+};
+
+export const convertFromBaseUnit = (baseQuantity: number, targetUnit: BaseUnit): number => {
+  if (targetUnit === 'kg') return baseQuantity / 1000;
+  if (targetUnit === 'l') return baseQuantity / 1000;
+  return baseQuantity; // g, ml, u
 };
 
 export const getBaseUnitType = (unit: BaseUnit): 'mass' | 'volume' | 'unit' => {
@@ -28,7 +34,7 @@ export const calculateIngredientCost = (
 ) => {
   const purchasedBaseQty = convertToBaseUnit(purchasedQuantity, purchasedUnit);
   const usedBaseQty = convertToBaseUnit(usedQuantity, usedUnit);
-  
+
   const costPerBaseUnit = purchasedPrice / purchasedBaseQty;
   return costPerBaseUnit * usedBaseQty;
 };
@@ -38,4 +44,37 @@ export const formatCurrency = (amount: number) => {
     style: 'currency',
     currency: 'ARS',
   }).format(amount);
+};
+
+export const adjustStock = (
+  ingredients: Ingredient[],
+  recipes: Recipe[],
+  items: { recipeId: string; multiplier: number }[],
+  isDeducting: boolean
+): Ingredient[] => {
+  const newIngredients = [...ingredients];
+
+  items.forEach(item => {
+    const recipe = recipes.find(r => r.id === item.recipeId);
+    if (!recipe) return;
+
+    recipe.ingredients.forEach(ri => {
+      const index = newIngredients.findIndex(i => i.id === ri.ingredientId);
+      if (index !== -1) {
+        const ing = { ...newIngredients[index] };
+        const usedBaseQty = convertToBaseUnit(ri.quantity, ri.unit) * item.multiplier;
+        const usedInIngUnit = convertFromBaseUnit(usedBaseQty, ing.unit);
+
+        if (isDeducting) {
+          ing.quantity = Math.max(0, ing.quantity - usedInIngUnit);
+        } else {
+          ing.quantity += usedInIngUnit;
+        }
+
+        newIngredients[index] = ing;
+      }
+    });
+  });
+
+  return newIngredients;
 };
