@@ -46,6 +46,43 @@ export const formatCurrency = (amount: number) => {
   }).format(amount);
 };
 
+export const calculateRecipeCost = (recipe: Recipe, ingredients: Ingredient[]) => {
+  return recipe.ingredients.reduce((total, ri) => {
+    const ingredient = ingredients.find((i) => i.id === ri.ingredientId);
+    if (!ingredient) return total;
+    return total + calculateIngredientCost(
+      ingredient.purchasedQuantity,
+      ingredient.unit,
+      ingredient.price,
+      ri.quantity,
+      ri.unit
+    );
+  }, 0);
+};
+
+export const calculateEventTotalCost = (event: any, recipes: Recipe[], ingredients: Ingredient[]) => {
+  const ingredientsCost = event.recipes.reduce((total: number, er: any) => {
+    const recipe = recipes.find((r) => r.id === er.recipeId);
+    if (!recipe) return total;
+    return total + calculateRecipeCost(recipe, ingredients) * er.multiplier;
+  }, 0);
+  const laborCost = (event.partnerHours * (event.partnerHourlyRate || 0)) + (event.extraHelpCost || 0);
+  return ingredientsCost + laborCost + (event.extraExpenses || 0);
+};
+
+export const calculateEventPrice = (event: any, recipes: Recipe[], ingredients: Ingredient[]) => {
+  const totalCost = calculateEventTotalCost(event, recipes, ingredients);
+  return totalCost * (1 + (event.profitMargin || 0) / 100);
+};
+
+export const calculateOrderTotalCost = (order: any, recipes: Recipe[], ingredients: Ingredient[]) => {
+  return order.items.reduce((total: number, item: any) => {
+    const recipe = recipes.find(r => r.id === item.recipeId);
+    if (!recipe) return total;
+    return total + calculateRecipeCost(recipe, ingredients) * item.quantity;
+  }, 0);
+};
+
 export const adjustStock = (
   ingredients: Ingredient[],
   recipes: Recipe[],

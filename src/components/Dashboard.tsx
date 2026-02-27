@@ -3,6 +3,7 @@ import { useAppContext } from '../store';
 import { ShoppingBag, BookOpen, CalendarHeart, TrendingUp, Package, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { calculateEventTotalCost, calculateEventPrice, calculateOrderTotalCost, formatCurrency } from '../utils';
 
 export function Dashboard() {
   const { ingredients, recipes, events, orders } = useAppContext();
@@ -12,33 +13,12 @@ export function Dashboard() {
     .sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime())
     .slice(0, 5);
 
-  const calculateEventTotalCost = (event: any) => {
-    const ingredientsCost = event.recipes.reduce((total: number, er: any) => {
-      const recipe = recipes.find((r) => r.id === er.recipeId);
-      if (!recipe) return total;
-
-      const recipeCost = recipe.ingredients.reduce((rTotal, ri) => {
-        const ingredient = ingredients.find((i) => i.id === ri.ingredientId);
-        if (!ingredient) return rTotal;
-        const costPerUnit = ingredient.price / ingredient.purchasedQuantity;
-        return rTotal + costPerUnit * ri.quantity;
-      }, 0);
-
-      return total + recipeCost * er.multiplier;
-    }, 0);
-    const laborCost = (event.partnerHours * event.partnerHourlyRate) + event.extraHelpCost;
-    return ingredientsCost + laborCost + (event.extraExpenses || 0);
-  };
-
-  const calculateEventPrice = (event: any) => {
-    const totalCost = calculateEventTotalCost(event);
-    return totalCost * (1 + event.profitMargin / 100);
-  };
-
   const totalOrdersRevenue = orders.reduce((total, order) => total + order.totalPrice, 0);
 
-  const totalRevenue = events.reduce((total, event) => total + calculateEventPrice(event), 0) + totalOrdersRevenue;
-  const totalCost = events.reduce((total, event) => total + calculateEventTotalCost(event), 0);
+  const totalRevenue = events.reduce((total, event) => total + calculateEventPrice(event, recipes, ingredients), 0) + totalOrdersRevenue;
+  const eventsCost = events.reduce((total, event) => total + calculateEventTotalCost(event, recipes, ingredients), 0);
+  const ordersCost = orders.reduce((total, order) => total + calculateOrderTotalCost(order, recipes, ingredients), 0);
+  const totalCost = eventsCost + ordersCost;
   const totalProfit = totalRevenue - totalCost;
 
   const upcomingOrders = orders
@@ -47,9 +27,10 @@ export function Dashboard() {
     .slice(0, 5);
 
   const allTransactions = [
-    ...events.map(e => ({ date: new Date(e.date), amount: calculateEventPrice(e), type: 'Ingreso' })),
+    ...events.map(e => ({ date: new Date(e.date), amount: calculateEventPrice(e, recipes, ingredients), type: 'Ingreso' })),
     ...orders.map(o => ({ date: new Date(o.deliveryDate), amount: o.totalPrice, type: 'Ingreso' })),
-    ...events.map(e => ({ date: new Date(e.date), amount: calculateEventTotalCost(e), type: 'Egreso' }))
+    ...events.map(e => ({ date: new Date(e.date), amount: calculateEventTotalCost(e, recipes, ingredients), type: 'Egreso' })),
+    ...orders.map(o => ({ date: new Date(o.deliveryDate), amount: calculateOrderTotalCost(o, recipes, ingredients), type: 'Egreso' }))
   ].sort((a, b) => a.date.getTime() - b.date.getTime());
 
   const chartDataMap = new Map();
@@ -135,20 +116,28 @@ export function Dashboard() {
             </div>
             {upcomingEvents.length > 0 ? (
               <div className="space-y-4">
-                {upcomingEvents.map((event) => (
-                  <div key={event.id} className="flex justify-between items-center p-5 bg-[var(--color-pastry-bg)] rounded-2xl border border-[var(--color-pastry-cream)] hover:bg-white hover:premium-shadow transition-all duration-300">
-                    <div>
-                      <p className="font-bold text-[var(--color-pastry-brown)] text-lg leading-none mb-1">{event.name}</p>
-                      <p className="text-sm text-stone-500 font-medium">
-                        {new Date(event.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long' })} • {event.pax} personas
-                      </p>
+                {upcomingEvents.map((event) => {
+                  const price = calculateEventPrice(event, recipes, ingredients);
+                  return (
+                    <div key={event.id} className="flex justify-between items-center bg-stone-50 p-5 rounded-2xl border border-stone-100/50 hover:bg-stone-100/50 transition-all group">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-[var(--color-pastry-brown)] group-hover:scale-110 transition-transform">
+                          <Clock size={20} />
+                        </div>
+                        <div>
+                          <p className="font-bold text-[var(--color-pastry-brown)] text-lg leading-none mb-1">{event.name}</p>
+                          <p className="text-sm text-stone-500 font-medium">
+                            {new Date(event.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long' })} • {event.pax} personas
+                          </p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xl font-bold text-[var(--color-pastry-accent)]">{formatCurrency(price)}</p>
+                        <p className="text-xs font-bold text-stone-400 uppercase tracking-widest mt-1">Margen: {event.profitMargin}%</p>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-bold text-[var(--color-pastry-accent)] text-lg">${calculateEventPrice(event).toLocaleString('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-                      <p className="text-xs text-stone-500 font-medium">Margen: {event.profitMargin}%</p>
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-12 bg-[var(--color-pastry-bg)] rounded-2xl border border-dashed border-[var(--color-pastry-cream)]">

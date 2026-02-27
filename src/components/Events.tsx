@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAppContext } from '../store';
 import { Plus, Edit2, Trash2, Search, FileText, Download, Users, Clock, DollarSign } from 'lucide-react';
 import { Event, EventRecipe } from '../types';
-import { calculateIngredientCost, formatCurrency } from '../utils';
+import { calculateIngredientCost, formatCurrency, calculateRecipeCost, calculateEventTotalCost, calculateEventPrice } from '../utils';
 
 export function Events() {
   const { events, recipes, ingredients, addEvent, updateEvent, deleteEvent } = useAppContext();
@@ -32,34 +32,7 @@ export function Events() {
     e.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const calculateRecipeCost = (recipeId: string) => {
-    const recipe = recipes.find((r) => r.id === recipeId);
-    if (!recipe) return 0;
-    return recipe.ingredients.reduce((total, ri) => {
-      const ingredient = ingredients.find((i) => i.id === ri.ingredientId);
-      if (!ingredient) return total;
-      return total + calculateIngredientCost(
-        ingredient.purchasedQuantity,
-        ingredient.unit,
-        ingredient.price,
-        ri.quantity,
-        ri.unit
-      );
-    }, 0);
-  };
 
-  const calculateEventTotalCost = (event: Event | Omit<Event, 'id'>) => {
-    const ingredientsCost = event.recipes.reduce((total, er) => {
-      return total + calculateRecipeCost(er.recipeId) * er.multiplier;
-    }, 0);
-    const laborCost = (event.partnerHours * event.partnerHourlyRate) + event.extraHelpCost;
-    return ingredientsCost + laborCost + event.extraExpenses;
-  };
-
-  const calculateEventPrice = (event: Event | Omit<Event, 'id'>) => {
-    const totalCost = calculateEventTotalCost(event);
-    return totalCost * (1 + event.profitMargin / 100);
-  };
 
   const handleAddRecipeToEvent = () => {
     if (!currentRecipe.recipeId || currentRecipe.multiplier <= 0) return;
@@ -322,7 +295,7 @@ export function Events() {
                       {formData.recipes.map((er, idx) => {
                         const recipe = recipes.find((r) => r.id === er.recipeId);
                         if (!recipe) return null;
-                        const cost = calculateRecipeCost(recipe.id) * er.multiplier;
+                        const cost = calculateRecipeCost(recipe, ingredients) * er.multiplier;
                         const totalYield = recipe.yieldAmount * er.multiplier;
                         return (
                           <tr key={idx} className="hover:bg-[var(--color-pastry-bg)] transition-colors">
@@ -370,7 +343,10 @@ export function Events() {
                   <div className="bg-white p-4 rounded-xl shadow-sm">
                     <p className="text-gray-500 font-medium mb-1 uppercase tracking-wide text-xs">Costo Insumos</p>
                     <p className="font-bold text-lg text-[var(--color-pastry-brown)]">
-                      {formatCurrency(formData.recipes.reduce((t, er) => t + calculateRecipeCost(er.recipeId) * er.multiplier, 0))}
+                      {formatCurrency(formData.recipes.reduce((t, er) => {
+                        const r = recipes.find(r => r.id === er.recipeId);
+                        return t + (r ? calculateRecipeCost(r, ingredients) : 0) * er.multiplier;
+                      }, 0))}
                     </p>
                   </div>
                   <div className="bg-white p-4 rounded-xl shadow-sm">
@@ -382,13 +358,13 @@ export function Events() {
                   <div className="bg-white p-4 rounded-xl shadow-sm border-2 border-[var(--color-pastry-cream)]">
                     <p className="text-gray-500 font-medium mb-1 uppercase tracking-wide text-xs">Costo Total</p>
                     <p className="font-bold text-xl text-[var(--color-pastry-brown)]">
-                      {formatCurrency(calculateEventTotalCost(formData))}
+                      {formatCurrency(calculateEventTotalCost(formData, recipes, ingredients))}
                     </p>
                   </div>
                   <div className="bg-[var(--color-pastry-brown)] p-4 rounded-xl shadow-sm text-white">
                     <p className="text-white/80 font-medium mb-1 uppercase tracking-wide text-xs">Precio Sugerido</p>
                     <p className="font-bold text-2xl text-[var(--color-pastry-cream)]">
-                      {formatCurrency(calculateEventPrice(formData))}
+                      {formatCurrency(calculateEventPrice(formData, recipes, ingredients))}
                     </p>
                   </div>
                 </div>
@@ -506,8 +482,8 @@ export function Events() {
             </thead>
             <tbody className="divide-y divide-[var(--color-pastry-cream)]">
               {filteredEvents.map((event) => {
-                const totalCost = calculateEventTotalCost(event);
-                const finalPrice = calculateEventPrice(event);
+                const totalCost = calculateEventTotalCost(event, recipes, ingredients);
+                const finalPrice = calculateEventPrice(event, recipes, ingredients);
                 return (
                   <tr key={event.id} className="hover:bg-[var(--color-pastry-bg)] transition-colors group">
                     <td className="p-5 font-bold text-[var(--color-pastry-brown)]">{event.name}</td>
