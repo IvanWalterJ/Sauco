@@ -23,9 +23,11 @@ export function Dashboard() {
         return rTotal + costPerUnit * ri.quantity;
       }, 0);
 
+      const laborCost = (event.partnerHours * event.partnerHourlyRate) + event.extraHelpCost;
       return total + recipeCost * er.multiplier;
     }, 0);
-    return ingredientsCost + event.laborCost + event.extraExpenses;
+    const laborCost = (event.partnerHours * event.partnerHourlyRate) + event.extraHelpCost;
+    return ingredientsCost + laborCost + (event.extraExpenses || 0);
   };
 
   const calculateEventPrice = (event: any) => {
