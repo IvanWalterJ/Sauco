@@ -20,7 +20,7 @@ export function Dashboard() {
       const recipeCost = recipe.ingredients.reduce((rTotal, ri) => {
         const ingredient = ingredients.find((i) => i.id === ri.ingredientId);
         if (!ingredient) return rTotal;
-        const costPerUnit = ingredient.price / ingredient.quantity;
+        const costPerUnit = ingredient.price / ingredient.purchasedQuantity;
         return rTotal + costPerUnit * ri.quantity;
       }, 0);
 
@@ -140,7 +140,7 @@ export function Dashboard() {
                     <div>
                       <p className="font-bold text-[var(--color-pastry-brown)] text-lg leading-none mb-1">{event.name}</p>
                       <p className="text-sm text-stone-500 font-medium">
-                        {new Date(event.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long' })} • {event.pax} pax
+                        {new Date(event.date).toLocaleDateString('es-AR', { day: '2-digit', month: 'long' })} • {event.pax} personas
                       </p>
                     </div>
                     <div className="text-right">

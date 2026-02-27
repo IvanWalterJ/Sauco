@@ -5,6 +5,7 @@ export interface Ingredient {
   name: string;
   price: number;
   quantity: number;
+  purchasedQuantity: number;
   unit: BaseUnit;
 }
 

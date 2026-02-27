@@ -33,7 +33,7 @@ export function Recipes() {
       const ingredient = ingredients.find((i) => i.id === ri.ingredientId);
       if (!ingredient) return total;
       return total + calculateIngredientCost(
-        ingredient.quantity,
+        ingredient.purchasedQuantity,
         ingredient.unit,
         ingredient.price,
         ri.quantity,
@@ -238,7 +238,7 @@ export function Recipes() {
                         const ingredient = ingredients.find((i) => i.id === ri.ingredientId);
                         if (!ingredient) return null;
                         const cost = calculateIngredientCost(
-                          ingredient.quantity,
+                          ingredient.purchasedQuantity,
                           ingredient.unit,
                           ingredient.price,
                           ri.quantity,

@@ -39,7 +39,7 @@ export function Events() {
       const ingredient = ingredients.find((i) => i.id === ri.ingredientId);
       if (!ingredient) return total;
       return total + calculateIngredientCost(
-        ingredient.quantity,
+        ingredient.purchasedQuantity,
         ingredient.unit,
         ingredient.price,
         ri.quantity,
@@ -127,7 +127,7 @@ export function Events() {
 
         const totalQuantity = ri.quantity * er.multiplier;
         const totalCost = calculateIngredientCost(
-          ingredient.quantity,
+          ingredient.purchasedQuantity,
           ingredient.unit,
           ingredient.price,
           totalQuantity,
@@ -193,7 +193,7 @@ export function Events() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-bold text-[var(--color-pastry-text)] mb-2">Personas (Pax)</label>
+                <label className="block text-sm font-bold text-[var(--color-pastry-text)] mb-2">Cantidad de Personas</label>
                 <input
                   type="number"
                   required
@@ -268,7 +268,7 @@ export function Events() {
 
             <div className="border-t border-[var(--color-pastry-cream)] pt-6">
               <h4 className="text-xl font-serif font-bold text-[var(--color-pastry-brown)] mb-4">Recetas del Evento</h4>
-              
+
               <div className="flex flex-col md:flex-row gap-4 mb-6 items-end bg-[var(--color-pastry-bg)] p-4 rounded-2xl border border-[var(--color-pastry-cream)]">
                 <div className="flex-1">
                   <label className="block text-xs font-bold text-gray-500 mb-2 uppercase tracking-wide">Receta</label>
@@ -365,7 +365,7 @@ export function Events() {
                     />
                   </div>
                 </div>
-                
+
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-6 text-sm">
                   <div className="bg-white p-4 rounded-xl shadow-sm">
                     <p className="text-gray-500 font-medium mb-1 uppercase tracking-wide text-xs">Costo Insumos</p>
@@ -498,7 +498,7 @@ export function Events() {
               <tr className="bg-white border-b-2 border-[var(--color-pastry-cream)] text-sm uppercase tracking-wider text-gray-500">
                 <th className="p-5 font-bold">Evento</th>
                 <th className="p-5 font-bold">Fecha</th>
-                <th className="p-5 font-bold">Pax</th>
+                <th className="p-5 font-bold">Personas</th>
                 <th className="p-5 font-bold">Costo Total</th>
                 <th className="p-5 font-bold">Precio Sugerido</th>
                 <th className="p-5 font-bold text-right">Acciones</th>
@@ -515,7 +515,7 @@ export function Events() {
                     <td className="p-5 text-gray-600 font-medium">{event.pax}</td>
                     <td className="p-5 text-gray-600 font-bold">{formatCurrency(totalCost)}</td>
                     <td className="p-5 text-[var(--color-pastry-accent)] font-bold text-lg">{formatCurrency(finalPrice)}</td>
-                    <td className="p-5 text-right space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <td className="p-5 text-right space-x-2 transition-opacity">
                       <button
                         onClick={() => setViewingEvent(event)}
                         className="p-2 text-gray-400 hover:text-emerald-600 hover:bg-emerald-50 rounded-xl transition-all"

@@ -13,6 +13,7 @@ export function Ingredients() {
   const [formData, setFormData] = useState<Omit<Ingredient, 'id'>>({
     name: '',
     price: 0,
+    purchasedQuantity: 0,
     quantity: 0,
     unit: 'g',
   });
@@ -26,17 +27,18 @@ export function Ingredients() {
     if (editingId) {
       updateIngredient(editingId, formData);
     } else {
-      addIngredient(formData);
+      addIngredient({ ...formData, quantity: formData.purchasedQuantity });
     }
     setIsFormOpen(false);
     setEditingId(null);
-    setFormData({ name: '', price: 0, quantity: 0, unit: 'g' });
+    setFormData({ name: '', price: 0, purchasedQuantity: 0, quantity: 0, unit: 'g' });
   };
 
   const handleEdit = (ingredient: Ingredient) => {
     setFormData({
       name: ingredient.name,
       price: ingredient.price,
+      purchasedQuantity: ingredient.purchasedQuantity,
       quantity: ingredient.quantity,
       unit: ingredient.unit,
     });
@@ -98,18 +100,34 @@ export function Ingredients() {
               />
             </div>
             <div>
-              <label className="block text-sm font-bold text-[var(--color-pastry-text)] mb-2">Cantidad que trae</label>
+              <label className="block text-sm font-bold text-[var(--color-pastry-text)] mb-2">Cantidad Comprada</label>
               <input
                 type="number"
                 required
                 min="0"
                 step="0.01"
-                value={formData.quantity || ''}
-                onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) })}
+                value={formData.purchasedQuantity || ''}
+                onChange={(e) => setFormData({ ...formData, purchasedQuantity: parseFloat(e.target.value) })}
                 className="w-full p-3 bg-[var(--color-pastry-bg)] border border-[var(--color-pastry-cream)] rounded-xl focus:ring-2 focus:ring-[var(--color-pastry-accent)] focus:border-transparent outline-none transition-all"
                 placeholder="Ej. 500, 1"
               />
             </div>
+            {editingId && (
+              <div>
+                <label className="block text-sm font-bold text-[var(--color-pastry-text)] mb-2">
+                  Stock Restante
+                </label>
+                <input
+                  type="number"
+                  required
+                  min="0"
+                  step="0.01"
+                  value={formData.quantity === 0 ? 0 : formData.quantity || ''}
+                  onChange={(e) => setFormData({ ...formData, quantity: parseFloat(e.target.value) })}
+                  className="w-full p-3 bg-white border-2 border-[var(--color-pastry-accent)] rounded-xl focus:ring-2 focus:ring-[var(--color-pastry-brown)] focus:border-transparent outline-none transition-all font-bold text-[var(--color-pastry-brown)]"
+                />
+              </div>
+            )}
             <div>
               <label className="block text-sm font-bold text-[var(--color-pastry-text)] mb-2">Unidad de medida</label>
               <select
@@ -163,20 +181,24 @@ export function Ingredients() {
               <tr className="bg-white border-b-2 border-[var(--color-pastry-cream)] text-sm uppercase tracking-wider text-gray-500">
                 <th className="p-5 font-bold">Nombre</th>
                 <th className="p-5 font-bold">Precio</th>
-                <th className="p-5 font-bold">Cantidad</th>
+                <th className="p-5 font-bold">Cant. Comprada</th>
+                <th className="p-5 font-bold">Stock Restante</th>
                 <th className="p-5 font-bold">Costo Unitario</th>
                 <th className="p-5 font-bold text-right">Acciones</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[var(--color-pastry-cream)]">
               {filteredIngredients.map((ingredient) => {
-                const costPerUnit = ingredient.price / ingredient.quantity;
+                const costPerUnit = ingredient.price / ingredient.purchasedQuantity;
                 return (
                   <tr key={ingredient.id} className="hover:bg-[var(--color-pastry-bg)] transition-colors group">
                     <td className="p-5 font-bold text-[var(--color-pastry-brown)]">{ingredient.name}</td>
                     <td className="p-5 text-gray-600">{formatCurrency(ingredient.price)}</td>
                     <td className="p-5 text-gray-600 font-medium">
-                      {ingredient.quantity} {ingredient.unit}
+                      {ingredient.purchasedQuantity} {ingredient.unit}
+                    </td>
+                    <td className="p-5 text-[var(--color-pastry-brown)] font-bold">
+                      {Number(ingredient.quantity.toFixed(2))} {ingredient.unit}
                     </td>
                     <td className="p-5 text-gray-500">
                       {formatCurrency(costPerUnit)} / {ingredient.unit}

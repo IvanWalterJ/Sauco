@@ -39,6 +39,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
+        if (parsed.ingredients) {
+          parsed.ingredients = parsed.ingredients.map((i: any) => ({
+            ...i,
+            purchasedQuantity: i.purchasedQuantity ?? i.quantity,
+            quantity: i.quantity ?? 0
+          }));
+        }
         return { ...defaultState, ...parsed };
       } catch (e) {
         console.error('Failed to parse saved data', e);
